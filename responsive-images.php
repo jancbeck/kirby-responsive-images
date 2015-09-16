@@ -151,9 +151,9 @@ function kirby_get_srcset_array( $file ) {
     // set some arbitrary defaults
     if (empty($sources_arr)) {
         $sources_arr = array(
-            array('width' => 480),
-            array('width' => 768),
-            array('width' => 1200),
+            'small'  => array('width' => 480),
+            'medium' => array('width' => 768),
+            'large'  => array('width' => 1200),
         );
     }
     return $sources_arr;
