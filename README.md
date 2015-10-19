@@ -4,7 +4,7 @@ A simple drop-in implementation of [responsive images](https://responsiveimages.
 
 ## Installation
 
-Unpack to your kirby `/site/plugins` directory.
+[Download the latest release](https://github.com/jancbeck/kirby-responsive-images/releases/) and unpack to your kirby `/site/plugins` directory.
 
 ## Usage
 
