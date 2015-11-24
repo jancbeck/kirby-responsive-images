@@ -39,7 +39,7 @@ c::set('responsiveimages.sizes', array(
 ));
 ```
 
-1. `$image_width` is a placeholder that will be replaced by the images actual pixel width.
+1. `$img_width` is a placeholder that will be replaced by the images actual pixel width.
 2. The array key will be matched against the `classes` attribute of the image. In the example above `'size_value' => 'calc(50vw - 30px)'` will only be added if the image has the `alignleft` attribute.
 
 ### Sources
