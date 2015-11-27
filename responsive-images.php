@@ -118,19 +118,50 @@ kirbytext::$tags['image'] = array(
 );
 
 /**
+ *  Returns the image scale based on the filename
+ *  2x will return a scale of 2 e.g.
+ *
+ *  @param   File  $file
+ *
+ *  @return  int
+ */
+function kirby_get_image_scale($file) {
+    $file_name_parts = explode("@", $file->name());
+    if(count($file_name_parts)) {
+        $last_part = end($file_name_parts);
+        return intval(str_replace('x', '', $last_part));
+    }
+}
+
+/**
  *  Returns the srcset attribute value for a given Kirby file
  *  Generates thumbnails on the fly
  *
  *  @param   File  $file
  *  @uses   kirby_get_srcset_array
+ *  @uses   kirby_get_image_scale
  *  @uses   thumb
  *
  *  @return  string
  */
 function kirby_get_srcset( $file ) {
-    $srcset = $file->url() .' '. $file->width() .'w';
+    $srcset = "";
     $sources_arr = kirby_get_srcset_array( $file );
 
+    $scale = kirby_get_image_scale($file);
+    if($scale) {
+        $srcset .= ''. $file->url() .' '.$scale.'x';
+        for ($i=$scale-1; $i > 0; $i--) {
+            $thumb = thumb($file, array('width' => $file->width() * ($i / $scale) ));
+            $srcset .= ', '. $thumb->url() .' '. $i .'x';
+        }
+
+    }
+
+    if($srcset != '')
+        $srcset .= ', ';
+
+    $srcset .= $file->url() .' '. $file->width() .'w';
     foreach ($sources_arr as $source) {
         $thumb = thumb($file, $source);
         $srcset .= ', '. $thumb->url() .' '. $thumb->width() .'w';
