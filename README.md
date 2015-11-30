@@ -7,8 +7,11 @@ A simple drop-in implementation of [responsive images](https://responsiveimages.
 [Download the latest release](https://github.com/jancbeck/kirby-responsive-images/releases/) and unpack to your kirby `/site/tags` directory.
 
 Alternatively you can:
+
 ``git clone https://github.com/jancbeck/kirby-responsive-images.git site/tags/kirby-responsive-images``
-From the root of your kirby install. Then you have to create a ``responsiveimage.php`` inside your ``site/tags`` with following content:
+From the root of your kirby install. 
+
+Then you have to create a ``responsiveimage.php`` inside your ``site/tags`` with following content:
 
 ```
 <?php
