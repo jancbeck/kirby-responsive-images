@@ -16,7 +16,7 @@ Then you have to create a ``responsiveimage.php`` inside your ``site/tags`` with
 ```
 <?php
 require_once('kirby-responsive-images/responsiveimage.php');
-``
+```
 
 ## Usage
 
