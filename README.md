@@ -83,7 +83,7 @@ scale and sizes can't be mixed see: [Stackoverlow answer](http://stackoverflow.c
 
 ### Template usage
 
-You can use the responsive image tag directly in you template using the [Kirbytag](http://getkirby.com/docs/cheatsheet/helpers/kirbytag) helper function: 
+You can use the responsive image tag directly inside your template using the [Kirbytag](http://getkirby.com/docs/cheatsheet/helpers/kirbytag) helper function: 
 
 ```
 <?php echo kirbytag(array('responsiveimage' => 'workflow@3x.jpg', 'link' => 'workflow@3x.jpg', 'width' => 1244)); ?>
