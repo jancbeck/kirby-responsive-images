@@ -20,7 +20,7 @@ require_once('kirby-responsive-images/responsiveimage.php');
 
 ## Usage
 
-There nothing you need to change in order to have responsive image support. Just include images as you would do normally:
+You will then have the new responsiveimage tag avalible:
 
 `(responsiveimage:workflow@3x.jpg link:workflow@3x.jpg width:1244)`
 
