@@ -1,6 +1,6 @@
 <?php
 
-// image tag
+// responsiveimage tag
 kirbytext::$tags['image'] = array(
   'attr' => array(
     'width',
@@ -17,21 +17,27 @@ kirbytext::$tags['image'] = array(
     'popup',
     'rel',
     'srcset',
-    'sizes'
+    'sizes',
+    'usescale',
+    'sizeattr'
   ),
   'html' => function($tag) {
 
-    $url     = $tag->attr('image');
-    $alt     = $tag->attr('alt');
-    $title   = $tag->attr('title');
-    $link    = $tag->attr('link');
-    $caption = $tag->attr('caption');
-    $srcset  = $tag->attr('srcset');
-    $sizes   = $tag->attr('sizes');
-    $file    = $tag->file($url);
+    $url       = $tag->attr('image');
+    $alt       = $tag->attr('alt');
+    $title     = $tag->attr('title');
+    $link      = $tag->attr('link');
+    $caption   = $tag->attr('caption');
+    $srcset    = $tag->attr('srcset');
+    $sizes     = $tag->attr('sizes');
+    $use_scale = $tag->attr('usescale');
+    $size_attr = $tag->attr('sizeattr');
+    $file      = $tag->file($url);
 
     // use the file url if available and otherwise the given url
     $url = $file ? $file->url() : url($url);
+    $use_scale = $use_scale == "true" || $use_scale == true;
+    $size_attr = $size_attr == "true" || $size_attr == true;
 
     // alt is just an alternative for text
     if($text = $tag->attr('text')) $alt = $text;
@@ -49,7 +55,15 @@ kirbytext::$tags['image'] = array(
 
     }
 
-    if(empty($alt)) $alt = pathinfo($url, PATHINFO_FILENAME);
+    $width = null;
+    $height = null;
+    if($size_attr && $file) {
+        $image_scale = kirby_get_image_scale($file);
+        $width = ($tag->attr('width') | $file->width()) / $image_scale;
+        $height = ($tag->attr('height') | $file->height()) / $image_scale;
+    }
+
+    if(empty($alt) && $alt != "") $alt = pathinfo($url, PATHINFO_FILENAME);
 
     // link builder
     $_link = function($image) use($tag, $url, $link, $file) {
@@ -78,20 +92,21 @@ kirbytext::$tags['image'] = array(
 
     //srcset builder
     if($file && empty($srcset)) {
-    	$srcset = kirby_get_srcset($file);
+    	$srcset = kirby_get_srcset($file, $use_scale);
     }
 
     //sizes builder
-    if($file && empty($sizes)) {
+    $sizes = null;
+    if(!$use_scale && $file && empty($sizes)) {
         $classes = ( ! empty( $tag->attr('imgclass'))) ? explode( ' ', $tag->attr('imgclass')) : '';
     	$sizes = kirby_get_sizes($file, $tag->attr('width'), $classes);
 	}
 
     // image builder
-    $_image = function($class) use($tag, $url, $alt, $title, $srcset, $sizes) {
+    $_image = function($class) use($tag, $url, $alt, $title, $srcset, $sizes, $width, $height) {
       return html::img($url, array(
-        'width'  => $tag->attr('width'),
-        'height' => $tag->attr('height'),
+        'width'  => $width | $tag->attr('width'),
+        'height' => $height | $tag->attr('height'),
         'class'  => $class,
         'title'  => $title,
         'alt'    => $alt,
@@ -118,22 +133,52 @@ kirbytext::$tags['image'] = array(
 );
 
 /**
+ *  Returns the image scale based on the filename
+ *  2x will return a scale of 2 e.g.
+ *
+ *  @param   File  $file
+ *
+ *  @return  int
+ */
+function kirby_get_image_scale( $file ) {
+    $file_name_parts = explode("@", $file->name());
+    if(count($file_name_parts)) {
+        $last_part = end($file_name_parts);
+        return intval(str_replace('x', '', $last_part));
+    }
+}
+
+/**
  *  Returns the srcset attribute value for a given Kirby file
  *  Generates thumbnails on the fly
  *
  *  @param   File  $file
  *  @uses   kirby_get_srcset_array
+ *  @uses   kirby_get_image_scale
  *  @uses   thumb
  *
  *  @return  string
  */
-function kirby_get_srcset( $file ) {
-    $srcset = $file->url() .' '. $file->width() .'w';
+function kirby_get_srcset( $file, $use_scale ) {
+    $srcset = "";
     $sources_arr = kirby_get_srcset_array( $file );
 
-    foreach ($sources_arr as $source) {
-        $thumb = thumb($file, $source);
-        $srcset .= ', '. $thumb->url() .' '. $thumb->width() .'w';
+    if($use_scale) {
+        $scale = kirby_get_image_scale($file);
+        if($scale) {
+            $srcset .= ''. $file->url() .' '.$scale.'x';
+            for ($i=$scale-1; $i > 0; $i--) {
+                $thumb = thumb($file, array('width' => $file->width() * ($i / $scale) ));
+                $srcset .= ', '. $thumb->url() .' '. $i .'x';
+            }
+
+        }
+    } else {
+        $srcset .= $file->url() .' '. $file->width() .'w';
+        foreach ($sources_arr as $source) {
+            $thumb = thumb($file, $source);
+            $srcset .= ', '. $thumb->url() .' '. $thumb->width() .'w';
+        }
     }
     return $srcset;
 }
