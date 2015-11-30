@@ -4,13 +4,25 @@ A simple drop-in implementation of [responsive images](https://responsiveimages.
 
 ## Installation
 
-[Download the latest release](https://github.com/jancbeck/kirby-responsive-images/releases/) and unpack to your kirby `/site/plugins` directory.
+[Download the latest release](https://github.com/jancbeck/kirby-responsive-images/releases/) and unpack to your kirby `/site/tags` directory.
+
+Alternatively you can:
+
+``git clone https://github.com/jancbeck/kirby-responsive-images.git site/tags/kirby-responsive-images``
+From the root of your kirby install. 
+
+Then you have to create a ``responsiveimage.php`` inside your ``site/tags`` with following content:
+
+```
+<?php
+require_once('kirby-responsive-images/responsiveimage.php');
+```
 
 ## Usage
 
-There nothing you need to change in order to have responsive image support. Just include images as you would do normally:
+You will then have the new responsiveimage tag avalible:
 
-`(image:workflow@3x.jpg link:workflow@3x.jpg width:1244)`
+`(responsiveimage:workflow@3x.jpg link:workflow@3x.jpg width:1244)`
 
 Make sure your `/thumbs` directory is present and writable and ImageMagick is available.
 
@@ -57,6 +69,25 @@ c::set('responsiveimages.sources', array(
 
 1. The key names are optional and have no technical implications.
 2. Each array item takes the same arguments as Kirbys [thumb()](http://getkirby.com/docs/cheatsheet/helpers/thumb) function (`quality`, `blur`, `upscale` etc..).
+
+### Scale
+
+You can also use the `usescale` option to create a scale based srcset. It will take the name of the file as reference to auto generate the other scales.
+`workflow@3x.jpg` will create a srcset with a `3x`, `2x` and `1x` entry.
+
+`(responsiveimage:workflow@3x.jpg usescale:true)`
+
+It's important to define the correct basescale with the `@…x` pattern in your filename.
+
+scale and sizes can't be mixed see: [Stackoverlow answer](http://stackoverflow.com/questions/26928828/html5-srcset-mixing-x-and-w-syntax/26937237#26937237)
+
+### Template usage
+
+You can use the responsive image tag directly inside your template using the [Kirbytag](http://getkirby.com/docs/cheatsheet/helpers/kirbytag) helper function: 
+
+```
+<?php echo kirbytag(array('responsiveimage' => 'workflow@3x.jpg', 'link' => 'workflow@3x.jpg', 'width' => 1244)); ?>
+```
 
 ## Support
 
