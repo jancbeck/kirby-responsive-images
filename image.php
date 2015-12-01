@@ -55,8 +55,8 @@ kirbytext::$tags['image'] = array(
 
     }
 
-    $width = null;
-    $height = null;
+    $width = $tag->attr('width');
+    $height = $tag->attr('height');
     if($size_attr && $file) {
         $image_scale = kirby_get_image_scale($file);
         $width = ($tag->attr('width') | $file->width()) / $image_scale;
@@ -105,8 +105,8 @@ kirbytext::$tags['image'] = array(
     // image builder
     $_image = function($class) use($tag, $url, $alt, $title, $srcset, $sizes, $width, $height) {
       return html::img($url, array(
-        'width'  => $width | $tag->attr('width'),
-        'height' => $height | $tag->attr('height'),
+        'width'  => $width,
+        'height' => $height,
         'class'  => $class,
         'title'  => $title,
         'alt'    => $alt,
