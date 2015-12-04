@@ -59,8 +59,8 @@ kirbytext::$tags['image'] = array(
     $height = $tag->attr('height');
     if($size_attr && $file) {
         $image_scale = kirby_get_image_scale($file);
-        $width = ($tag->attr('width') | $file->width()) / $image_scale;
-        $height = ($tag->attr('height') | $file->height()) / $image_scale;
+        $width = round(($tag->attr('width') | $file->width()) / $image_scale);
+        $height = round(($tag->attr('height') | $file->height()) / $image_scale);
     }
 
     if(empty($alt) && $alt != "") $alt = pathinfo($url, PATHINFO_FILENAME);
