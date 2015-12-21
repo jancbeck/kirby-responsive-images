@@ -18,6 +18,7 @@ kirbytext::$tags['image'] = array(
     'rel',
     'srcset',
     'sizes',
+    'sources',
     'usescale',
     'sizeattr'
   ),
@@ -30,6 +31,7 @@ kirbytext::$tags['image'] = array(
     $caption   = $tag->attr('caption');
     $srcset    = $tag->attr('srcset');
     $sizes     = $tag->attr('sizes');
+    $sources   = $tag->attr('sources');
     $use_scale = $tag->attr('usescale');
     $size_attr = $tag->attr('sizeattr');
     $file      = $tag->file($url);
@@ -92,11 +94,10 @@ kirbytext::$tags['image'] = array(
 
     //srcset builder
     if($file && empty($srcset)) {
-    	$srcset = kirby_get_srcset($file, $use_scale);
+    	$srcset = kirby_get_srcset($file, $use_scale, $sources);
     }
 
     //sizes builder
-    $sizes = null;
     if(!$use_scale && $file && empty($sizes)) {
         $classes = ( ! empty( $tag->attr('imgclass'))) ? explode( ' ', $tag->attr('imgclass')) : '';
     	$sizes = kirby_get_sizes($file, $tag->attr('width'), $classes);
@@ -159,9 +160,8 @@ function kirby_get_image_scale( $file ) {
  *
  *  @return  string
  */
-function kirby_get_srcset( $file, $use_scale ) {
+function kirby_get_srcset( $file, $use_scale, $sources ) {
     $srcset = "";
-    $sources_arr = kirby_get_srcset_array( $file );
 
     if($use_scale) {
         $scale = kirby_get_image_scale($file);
@@ -174,6 +174,23 @@ function kirby_get_srcset( $file, $use_scale ) {
 
         }
     } else {
+        if(empty($sources))
+            $sources_arr = kirby_get_srcset_array( $file );
+        else {
+            $sources_arr = array();
+            $sources_parts = explode(',', $sources);
+            foreach ($sources_parts as $source) {
+                $source = trim($source);
+                $parameter = substr($source, -1);
+                $value = substr($source, 0, -1);
+                if($parameter == 'w')
+                    $sources_arr[] = array('width' => intval($value));
+
+                if($parameter == 'h')
+                    $sources_arr[] = array('height' => intval($value));
+            }
+        }
+
         $srcset .= $file->url() .' '. $file->width() .'w';
         foreach ($sources_arr as $source) {
             $thumb = thumb($file, $source);
