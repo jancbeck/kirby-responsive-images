@@ -194,6 +194,8 @@ function kirby_get_srcset( $file, $use_scale, $sources ) {
         $srcset .= $file->url() .' '. $file->width() .'w';
         foreach ($sources_arr as $source) {
             $thumb = thumb($file, $source);
+            if(!$thumb->width())
+                continue;
             $srcset .= ', '. $thumb->url() .' '. $thumb->width() .'w';
         }
     }
