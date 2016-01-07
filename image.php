@@ -20,26 +20,29 @@ kirbytext::$tags['image'] = array(
     'sizes',
     'sources',
     'usescale',
-    'sizeattr'
+    'sizeattr',
+    'mergesrcset'
   ),
   'html' => function($tag) {
 
-    $url       = $tag->attr('image');
-    $alt       = $tag->attr('alt');
-    $title     = $tag->attr('title');
-    $link      = $tag->attr('link');
-    $caption   = $tag->attr('caption');
-    $srcset    = $tag->attr('srcset');
-    $sizes     = $tag->attr('sizes');
-    $sources   = $tag->attr('sources');
-    $use_scale = $tag->attr('usescale');
-    $size_attr = $tag->attr('sizeattr');
-    $file      = $tag->file($url);
+    $url            = $tag->attr('image');
+    $alt            = $tag->attr('alt');
+    $title          = $tag->attr('title');
+    $link           = $tag->attr('link');
+    $caption        = $tag->attr('caption');
+    $srcset         = $tag->attr('srcset');
+    $sizes          = $tag->attr('sizes');
+    $sources        = $tag->attr('sources');
+    $use_scale      = $tag->attr('usescale');
+    $size_attr      = $tag->attr('sizeattr');
+    $merge_srcset   = $tag->attr('mergesrcset');
+    $file           = $tag->file($url);
 
     // use the file url if available and otherwise the given url
     $url = $file ? $file->url() : url($url);
     $use_scale = $use_scale == "true" || $use_scale == true;
     $size_attr = $size_attr == "true" || $size_attr == true;
+    $merge_srcset = $merge_srcset == "true" || $merge_srcset == true;
 
     // alt is just an alternative for text
     if($text = $tag->attr('text')) $alt = $text;
@@ -93,8 +96,8 @@ kirbytext::$tags['image'] = array(
     };
 
     //srcset builder
-    if($file && empty($srcset)) {
-    	$srcset = kirby_get_srcset($file, $use_scale, $sources);
+    if($file && (empty($srcset) || $merge_srcset)) {
+    	$srcset = kirby_get_srcset($file, $use_scale, $sources, $merge_srcset, $srcset);
     }
 
     //sizes builder
@@ -160,7 +163,7 @@ function kirby_get_image_scale( $file ) {
  *
  *  @return  string
  */
-function kirby_get_srcset( $file, $use_scale, $sources ) {
+function kirby_get_srcset( $file, $use_scale, $sources, $merge, $srcset_to_merge ) {
     $srcset = "";
 
     if($use_scale) {
@@ -191,12 +194,57 @@ function kirby_get_srcset( $file, $use_scale, $sources ) {
             }
         }
 
+        if($merge && !empty($srcset_to_merge)) {
+            $urls_arr = array();
+            $widths_arr = array();
+            $srcset_parts = explode(',', $srcset_to_merge);
+            foreach ($srcset_parts as $srcset_part) {
+                $srcset_part = trim($srcset_part);
+                $srcset_parts = explode(' ', $srcset_part);
+
+                if(empty($srcset_parts) || count($srcset_parts) > 2)
+                    continue;
+
+                $urls_arr[$srcset_parts[1]] = $srcset_parts[0];
+                $parameter = substr($srcset_parts[1], -1);
+                $value = intval(substr($srcset_parts[1], 0, -1));
+
+                $exists = count(array_filter(
+                    $sources_arr,
+                    function ($element) use ($parameter, $value) {
+                        if($parameter == 'w' && isset($element['width']))
+                            return $element['width'] == $value;
+                        else if($parameter == 'h' && isset($element['height']))
+                            return $element['height'] == $value;
+                        else
+                            return false;
+                    }
+                )) != 0;
+
+                if(!$exists) {
+                    if($parameter == 'w')
+                        $sources_arr[] = array('width' => intval($value));
+
+                    if($parameter == 'h')
+                        $sources_arr[] = array('height' => intval($value));
+                }
+            }
+        }
+
         $srcset .= $file->url() .' '. $file->width() .'w';
         foreach ($sources_arr as $source) {
-            $thumb = thumb($file, $source);
-            if(!$thumb->width())
+            if($file->width() == $source['width'])
                 continue;
-            $srcset .= ', '. $thumb->url() .' '. $thumb->width() .'w';
+            $width = $source['width'] . 'w';
+            $url = $merge && isset($urls_arr[$width]) ? $urls_arr[$width] : null;
+            if($url) {
+                 $srcset .= ', '. $url .' '. $width;
+            } else {
+                $thumb = thumb($file, $source);
+                if(!$thumb->width())
+                    continue;
+                $srcset .= ', '. $thumb->url() .' '. $thumb->width() .'w';
+            }
         }
     }
     return $srcset;
