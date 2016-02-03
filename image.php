@@ -148,7 +148,8 @@ function kirby_get_image_scale( $file ) {
     $file_name_parts = explode("@", $file->name());
     if(count($file_name_parts)) {
         $last_part = end($file_name_parts);
-        return intval(str_replace('x', '', $last_part));
+        $scale = intval(str_replace('x', '', $last_part));
+        return $scale == 0 ? 1 : $scale;
     }
 }
 
