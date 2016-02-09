@@ -1,6 +1,6 @@
 <?php
 
-// image tag
+// responsiveimage tag
 kirbytext::$tags['image'] = array(
   'attr' => array(
     'width',
@@ -17,21 +17,32 @@ kirbytext::$tags['image'] = array(
     'popup',
     'rel',
     'srcset',
-    'sizes'
+    'sizes',
+    'sources',
+    'usescale',
+    'sizeattr',
+    'mergesrcset'
   ),
   'html' => function($tag) {
 
-    $url     = $tag->attr('image');
-    $alt     = $tag->attr('alt');
-    $title   = $tag->attr('title');
-    $link    = $tag->attr('link');
-    $caption = $tag->attr('caption');
-    $srcset  = $tag->attr('srcset');
-    $sizes   = $tag->attr('sizes');
-    $file    = $tag->file($url);
+    $url            = $tag->attr('image');
+    $alt            = $tag->attr('alt');
+    $title          = $tag->attr('title');
+    $link           = $tag->attr('link');
+    $caption        = $tag->attr('caption');
+    $srcset         = $tag->attr('srcset');
+    $sizes          = $tag->attr('sizes');
+    $sources        = $tag->attr('sources');
+    $use_scale      = $tag->attr('usescale');
+    $size_attr      = $tag->attr('sizeattr');
+    $merge_srcset   = $tag->attr('mergesrcset');
+    $file           = $tag->file($url);
 
     // use the file url if available and otherwise the given url
     $url = $file ? $file->url() : url($url);
+    $use_scale = $use_scale == "true" || $use_scale == true;
+    $size_attr = $size_attr == "true" || $size_attr == true;
+    $merge_srcset = $merge_srcset == "true" || $merge_srcset == true;
 
     // alt is just an alternative for text
     if($text = $tag->attr('text')) $alt = $text;
@@ -49,7 +60,15 @@ kirbytext::$tags['image'] = array(
 
     }
 
-    if(empty($alt)) $alt = pathinfo($url, PATHINFO_FILENAME);
+    $width = $tag->attr('width');
+    $height = $tag->attr('height');
+    if($size_attr && $file) {
+        $image_scale = kirby_get_image_scale($file);
+        $width = round(($tag->attr('width') | $file->width()) / $image_scale);
+        $height = round(($tag->attr('height') | $file->height()) / $image_scale);
+    }
+
+    if(empty($alt) && $alt != "") $alt = pathinfo($url, PATHINFO_FILENAME);
 
     // link builder
     $_link = function($image) use($tag, $url, $link, $file) {
@@ -77,21 +96,21 @@ kirbytext::$tags['image'] = array(
     };
 
     //srcset builder
-    if($file && empty($srcset)) {
-    	$srcset = kirby_get_srcset($file);
+    if($file && (empty($srcset) || $merge_srcset)) {
+    	$srcset = kirby_get_srcset($file, $use_scale, $sources, $merge_srcset, $srcset);
     }
 
     //sizes builder
-    if($file && empty($sizes)) {
+    if(!$use_scale && $file && empty($sizes)) {
         $classes = ( ! empty( $tag->attr('imgclass'))) ? explode( ' ', $tag->attr('imgclass')) : '';
     	$sizes = kirby_get_sizes($file, $tag->attr('width'), $classes);
 	}
 
     // image builder
-    $_image = function($class) use($tag, $url, $alt, $title, $srcset, $sizes) {
+    $_image = function($class) use($tag, $url, $alt, $title, $srcset, $sizes, $width, $height) {
       return html::img($url, array(
-        'width'  => $tag->attr('width'),
-        'height' => $tag->attr('height'),
+        'width'  => $width,
+        'height' => $height,
         'class'  => $class,
         'title'  => $title,
         'alt'    => $alt,
@@ -118,22 +137,116 @@ kirbytext::$tags['image'] = array(
 );
 
 /**
+ *  Returns the image scale based on the filename
+ *  2x will return a scale of 2 e.g.
+ *
+ *  @param   File  $file
+ *
+ *  @return  int
+ */
+function kirby_get_image_scale( $file ) {
+    $file_name_parts = explode("@", $file->name());
+    if(count($file_name_parts)) {
+        $last_part = end($file_name_parts);
+        $scale = intval(str_replace('x', '', $last_part));
+        return $scale == 0 ? 1 : $scale;
+    }
+}
+
+/**
  *  Returns the srcset attribute value for a given Kirby file
  *  Generates thumbnails on the fly
  *
  *  @param   File  $file
  *  @uses   kirby_get_srcset_array
+ *  @uses   kirby_get_image_scale
  *  @uses   thumb
  *
  *  @return  string
  */
-function kirby_get_srcset( $file ) {
-    $srcset = $file->url() .' '. $file->width() .'w';
-    $sources_arr = kirby_get_srcset_array( $file );
+function kirby_get_srcset( $file, $use_scale, $sources, $merge, $srcset_to_merge ) {
+    $srcset = "";
 
-    foreach ($sources_arr as $source) {
-        $thumb = thumb($file, $source);
-        $srcset .= ', '. $thumb->url() .' '. $thumb->width() .'w';
+    if($use_scale) {
+        $scale = kirby_get_image_scale($file);
+        if($scale) {
+            $srcset .= ''. $file->url() .' '.$scale.'x';
+            for ($i=$scale-1; $i > 0; $i--) {
+                $thumb = thumb($file, array('width' => $file->width() * ($i / $scale) ));
+                $srcset .= ', '. $thumb->url() .' '. $i .'x';
+            }
+
+        }
+    } else {
+        if(empty($sources))
+            $sources_arr = kirby_get_srcset_array( $file );
+        else {
+            $sources_arr = array();
+            $sources_parts = explode(',', $sources);
+            foreach ($sources_parts as $source) {
+                $source = trim($source);
+                $parameter = substr($source, -1);
+                $value = substr($source, 0, -1);
+                if($parameter == 'w')
+                    $sources_arr[] = array('width' => intval($value));
+
+                if($parameter == 'h')
+                    $sources_arr[] = array('height' => intval($value));
+            }
+        }
+
+        if($merge && !empty($srcset_to_merge)) {
+            $urls_arr = array();
+            $widths_arr = array();
+            $srcset_parts = explode(',', $srcset_to_merge);
+            foreach ($srcset_parts as $srcset_part) {
+                $srcset_part = trim($srcset_part);
+                $srcset_parts = explode(' ', $srcset_part);
+
+                if(empty($srcset_parts) || count($srcset_parts) > 2)
+                    continue;
+
+                $urls_arr[$srcset_parts[1]] = $srcset_parts[0];
+                $parameter = substr($srcset_parts[1], -1);
+                $value = intval(substr($srcset_parts[1], 0, -1));
+
+                $exists = count(array_filter(
+                    $sources_arr,
+                    function ($element) use ($parameter, $value) {
+                        if($parameter == 'w' && isset($element['width']))
+                            return $element['width'] == $value;
+                        else if($parameter == 'h' && isset($element['height']))
+                            return $element['height'] == $value;
+                        else
+                            return false;
+                    }
+                )) != 0;
+
+                if(!$exists) {
+                    if($parameter == 'w')
+                        $sources_arr[] = array('width' => intval($value));
+
+                    if($parameter == 'h')
+                        $sources_arr[] = array('height' => intval($value));
+                }
+            }
+        }
+
+        $srcset .= $file->url() .' '. $file->width() .'w';
+        foreach ($sources_arr as $source) {
+            if($file->width() == $source['width'])
+                continue;
+            $width = $source['width'] . 'w';
+            $url = $merge && isset($urls_arr[$width]) ? $urls_arr[$width] : null;
+            if($url) {
+                 $srcset .= ', '. $url .' '. $width;
+            } else {
+                $thumb = thumb($file, $source);
+                if(!$thumb->width())
+                    continue;
+                $srcset .= ', '. $thumb->url() .' '. $thumb->width() .'w';
+            }
+        }
     }
     return $srcset;
 }
