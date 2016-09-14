@@ -80,6 +80,9 @@ kirbytext::$tags['image'] = array(
 
     };
 
+    //override src with the first size in the sizes array
+    $src = kirby_get_fallback_size_source($file);
+
     //srcset builder
     if($file && empty($srcset)) {
     	$srcset = kirby_get_srcset($file);
@@ -92,8 +95,9 @@ kirbytext::$tags['image'] = array(
 	}
 
     // image builder
-    $_image = function($class) use($tag, $url, $alt, $title, $srcset, $sizes) {
+    $_image = function($class) use($src, $tag, $url, $alt, $title, $srcset, $sizes) {
       return html::img($url, array(
+        'src' => $src,
         'width'  => $tag->attr('width'),
         'height' => $tag->attr('height'),
         'class'  => $class,
@@ -143,7 +147,30 @@ function kirby_get_srcset( $file ) {
 }
 
 /**
- *  Returns the image sources for a given Kirby file 
+ *  Returns the non-responsive fallback image size src for a given Kirby file
+ *
+ *  @param   File  $file
+ *
+ *  @return  string
+ */
+function kirby_get_fallback_size_source( $file ) {
+    $sources_arr = kirby_get_srcset_array($file);
+    $default_size = kirby()->option('responsiveimages.defaultsource');
+
+    if (empty($default_size)) {
+        // default size is not defined in config,
+        // so we use the first available size from the array
+        reset($sources_arr);
+        $default_size = key($sources_arr);
+    }
+
+    $source = $sources_arr[$default_size];
+    $thumb = thumb($file, $source);
+    return $thumb->url();
+}
+
+/**
+ *  Returns the image sources for a given Kirby file
  *
  *  @return  array
  */
@@ -208,7 +235,7 @@ function kirby_get_sizes( $file, $width = null, $imgclass = array() ) {
  *  Returns the sizes for a given Kirby file
  *
  *  Uses 'responsiveimages.sizes' option to let site owners overwrite the defaults
- *  
+ *
  *  @param   File  $file
  *  @param   int  $width  Optional. Use when you want to force image to a certain width (retina/high-PPi usecase)
  *
