@@ -51,12 +51,12 @@ kirbytext::$tags['image'] = array(
 
     if(empty($alt)) $alt = pathinfo($url, PATHINFO_FILENAME);
 
+    $sources = kirby_get_sources_array();
+
     // link builder
-    $_link = function($image) use($tag, $url, $link, $file) {
+    $_link = function($image) use($tag, $url, $link, $file, $sources) {
 
       if(empty($link)) return $image;
-
-      $sources = kirby_get_sources_array();
 
       // build the href for the link
       if($link == 'self') {
@@ -80,16 +80,21 @@ kirbytext::$tags['image'] = array(
 
     };
 
-    //srcset builder
+    // srcset builder
     if($file && empty($srcset)) {
     	$srcset = kirby_get_srcset($file);
     }
 
-    //sizes builder
+    // sizes builder
     if($file && empty($sizes)) {
         $classes = ( ! empty( $tag->attr('imgclass'))) ? explode( ' ', $tag->attr('imgclass')) : '';
     	$sizes = kirby_get_sizes($file, $tag->attr('width'), $classes);
 	}
+    // allows src attribute to be overwritten
+    $defaultsource = kirby()->option('responsiveimages.defaultsource');
+    if ( isset($sources[$defaultsource])) {
+        $url = thumb($file, $sources[$defaultsource])->url();
+    }
 
     // image builder
     $_image = function($class) use($tag, $url, $alt, $title, $srcset, $sizes) {

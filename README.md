@@ -59,8 +59,20 @@ c::set('responsiveimages.sources', array(
 ));
 ```
 
-1. The key names may be used to link the image (see *Usage* section).
+1. The key names may be used to link the image or for default (see *Usage* and *Fallbacks* section).
 2. Each array item takes the same arguments as Kirbys [thumb()](http://getkirby.com/docs/cheatsheet/helpers/thumb) function (`quality`, `blur`, `upscale` etc..).
+
+### Fallbacks
+
+Browsers that support responive images will ignore the `src` attribute of the image and pick what ever is best for their device from the `srcsset` attribute.
+However, you might want to control what older browsers that don't support responsive images load. For that use case there is an option to set the default size based on the key name of the size (explained in the previous section).
+
+```
+<?php
+c::set('responsiveimages.defaultsource', 'small');
+```
+
+This will show older browsers the "small" image size. If this option is not set, browsers will load the original image.
 
 ## Support
 
