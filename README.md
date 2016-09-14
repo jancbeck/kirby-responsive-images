@@ -6,6 +6,8 @@ A simple drop-in implementation of [responsive images](https://responsiveimages.
 
 [Download the latest release](https://github.com/jancbeck/kirby-responsive-images/releases/) and unpack to your kirby `/site/plugins` directory.
 
+You can also rename the `responsive-images.php` file to `image.php` and move it to the `site/tags` directory if you prefer to keep all your custom tags there.
+
 ## Usage
 
 There nothing you need to change in order to have responsive image support. Just include images as you would do normally:

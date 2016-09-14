@@ -1,7 +1,7 @@
 <?php
 
 // image tag
-kirbytext::$tags['image'] = array(
+$kirby->set('tag', 'image', array(
   'attr' => array(
     'width',
     'height',
@@ -124,7 +124,7 @@ kirbytext::$tags['image'] = array(
     }
 
   }
-);
+));
 
 /**
  *  Returns the srcset attribute value for a given Kirby file

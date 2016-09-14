@@ -1,0 +1,8 @@
+{
+  "name": "kirby-responsive-images",
+  "description": "Bring responsive images to Kirby CMS",
+  "author": "Jan Beck <jancbeck@jancbeck.com>",
+  "version": "1.1.0",
+  "type": "kirby-plugin",
+  "license": "MIT"
+}
