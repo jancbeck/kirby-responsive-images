@@ -16,6 +16,10 @@ Make sure your `/thumbs` directory is present and writable and ImageMagick is av
 
 Although the plugin works without configuration, these options are available and can be added to your `/site/config/config.php`:
 
+It is also possible to link the image to one of the generated sizes using the keyword set via the `responsiveimages.sources` config. The following example will link to the smallest possible image size:
+
+`(image:workflow@3x.jpg link:small width:1244)`
+
 ### Sizes
 
 To control the sizes attribute you can use [media queries](https://ericportis.com/posts/2014/srcset-sizes/).
@@ -55,7 +59,7 @@ c::set('responsiveimages.sources', array(
 ));
 ```
 
-1. The key names are optional and have no technical implications.
+1. The key names may be used to link the image (see *Usage* section).
 2. Each array item takes the same arguments as Kirbys [thumb()](http://getkirby.com/docs/cheatsheet/helpers/thumb) function (`quality`, `blur`, `upscale` etc..).
 
 ## Support

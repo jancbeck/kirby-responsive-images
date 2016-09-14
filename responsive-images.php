@@ -56,11 +56,15 @@ kirbytext::$tags['image'] = array(
 
       if(empty($link)) return $image;
 
+      $sources = kirby_get_sources_array();
+
       // build the href for the link
       if($link == 'self') {
         $href = $url;
       } else if($file and $link == $file->filename()) {
         $href = $file->url();
+      } else if(isset($sources[$link])) { 
+        $href = thumb($file, $sources[$link])->url();
       } else if($tag->file($link)) {
         $href = $tag->file($link)->url();
       } else {
@@ -122,14 +126,14 @@ kirbytext::$tags['image'] = array(
  *  Generates thumbnails on the fly
  *
  *  @param   File  $file
- *  @uses   kirby_get_srcset_array
+ *  @uses   kirby_get_sources_array
  *  @uses   thumb
  *
  *  @return  string
  */
 function kirby_get_srcset( $file ) {
     $srcset = $file->url() .' '. $file->width() .'w';
-    $sources_arr = kirby_get_srcset_array( $file );
+    $sources_arr = kirby_get_sources_array( $file );
 
     foreach ($sources_arr as $source) {
         $thumb = thumb($file, $source);
@@ -141,11 +145,9 @@ function kirby_get_srcset( $file ) {
 /**
  *  Returns the image sources for a given Kirby file 
  *
- *  @param   File  $file
- *
  *  @return  array
  */
-function kirby_get_srcset_array( $file ) {
+function kirby_get_sources_array() {
     $sources_arr = kirby()->option('responsiveimages.sources');
 
     // set some arbitrary defaults
