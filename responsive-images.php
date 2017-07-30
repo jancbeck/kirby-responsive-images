@@ -47,6 +47,11 @@ $kirby->set('tag', 'image', array(
         $title = $file->title();
       }
 
+      if(empty($caption) and $file->caption() != '') {
+        $caption = $file->caption();
+      }
+
+
     }
 
     if(empty($alt)) $alt = pathinfo($url, PATHINFO_FILENAME);
