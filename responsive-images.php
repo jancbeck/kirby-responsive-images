@@ -98,10 +98,10 @@ $kirby->set('tag', 'image', array(
         $url = thumb($file, $sources[$defaultsource])->url();
     }
 
-    // determine if should be ignored or not
+    // ignore if 'srcset-ignore' parameter is set to true
     $ignore = (in_array($ignore, [1, true, 'yes'] )) ? true : false;
 
-    // only add responsive behaviour if not SVG
+    // ignore extensions set in config
     $ignored_ext = kirby()->option('responsiveimages.ignore-ext');
     $ext = strtolower(pathinfo($url, PATHINFO_EXTENSION));
     if(in_array($ext, $ignored_ext)) {
@@ -119,6 +119,7 @@ $kirby->set('tag', 'image', array(
         'alt'    => $alt
       );
 
+      // only add respnosive images attributes if not ignored
       if ($ignore !== true) {
           $options += ['srcset' => $srcset];
           $options += ['sizes'  => $sizes];
