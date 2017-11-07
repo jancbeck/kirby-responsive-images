@@ -17,7 +17,8 @@ $kirby->set('tag', 'image', array(
     'popup',
     'rel',
     'srcset',
-    'sizes'
+    'sizes',
+    'srcset-ignore'
   ),
   'html' => function($tag) {
 
@@ -28,6 +29,7 @@ $kirby->set('tag', 'image', array(
     $caption = $tag->attr('caption');
     $srcset  = $tag->attr('srcset');
     $sizes   = $tag->attr('sizes');
+    $ignore  = $tag->attr('srcset-ignore');
     $file    = $tag->file($url);
 
     // use the file url if available and otherwise the given url
@@ -96,17 +98,33 @@ $kirby->set('tag', 'image', array(
         $url = thumb($file, $sources[$defaultsource])->url();
     }
 
+    // determine if should be ignored or not
+    $ignore = (in_array($ignore, [1, true, 'yes'] )) ? true : false;
+
+    // only add responsive behaviour if not SVG
+    $ignored_ext = kirby()->option('responsiveimages.ignore-ext');
+    $ext = strtolower(pathinfo($url, PATHINFO_EXTENSION));
+    if(in_array($ext, $ignored_ext)) {
+        $ignore = true;
+    }
+
+
     // image builder
-    $_image = function($class) use($tag, $url, $alt, $title, $srcset, $sizes) {
-      return html::img($url, array(
+    $_image = function($class) use($tag, $url, $alt, $title, $srcset, $sizes, $ignore) {
+        $options = array(
         'width'  => $tag->attr('width'),
         'height' => $tag->attr('height'),
         'class'  => $class,
         'title'  => $title,
-        'alt'    => $alt,
-        'srcset' => $srcset,
-        'sizes'  => $sizes
-      ));
+        'alt'    => $alt
+      );
+
+      if ($ignore !== true) {
+          $options += ['srcset' => $srcset];
+          $options += ['sizes'  => $sizes];
+      }
+
+      return html::img($url, $options);
     };
 
     if(kirby()->option('kirbytext.image.figure') or !empty($caption)) {
