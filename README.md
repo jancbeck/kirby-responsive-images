@@ -2,6 +2,8 @@
 
 A simple drop-in implementation of [responsive images](https://responsiveimages.org/) for Kirby CMS. Automatically generates thumbnails for low-resolution devices.
 
+**Note:** This repository is no longer maintained. [Petition Bastian](https://github.com/getkirby/kirby/issues/new) if you want srcset support in Kirby.
+
 ## Installation
 
 [Download the latest release](https://github.com/jancbeck/kirby-responsive-images/releases/) and unpack to your kirby `/site/plugins` directory.
